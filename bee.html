@@ -1,0 +1,277 @@
+<html>
+
+<head>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+
+  <div style="position: relative; width: 945px;">
+    <div id="game-container" style="position: absolute; left: 0px;">
+
+    </div>
+    <div id="game-console" style="position: absolute; right: 180px;">
+      <ul id="message-list">
+
+      </ul>
+    </div>
+  </div>
+
+
+
+
+  <script>
+
+    let squareSize = 100;
+
+    class Base {
+      constructor(type, faction) {
+        this.type_ = type; // QUEEN / GUARDIAN
+        this.health = 100;
+        this.faction = faction; // BEE / WASP
+      }
+
+      get type() {
+        return this.type_;
+      }
+    }
+    class Queen extends Base {
+      constructor(faction) {
+        super('QUEEN', faction);
+        this.defense = 50;
+        this.attack = 50;
+        this.luck = Math.floor(Math.random() * 10);
+      }
+    }
+    class Guardian extends Base {
+      constructor(faction) {
+        super('GUARDIAN', faction);
+        this.defense = 30;
+        this.attack = 30;
+        this.luck = Math.floor(Math.random() * 10);
+      }
+    }
+
+    class Square {
+      setOccupant(occupant) {
+        this.occupant = occupant;
+      }
+    }
+
+    function writeToGameConsole(message) {
+      document.getElementById('message-list').innerHTML += `<div id="consola"><li >${message}</li></div>`;
+    }
+
+    class Playfield {
+      constructor() {
+        this.squares = [];
+        for (let i = 0; i < 5; i++) {
+          let row = [];
+          for (let j = 0; j < 5; j++) {
+            row.push(new Square());
+          }
+          this.squares.push(row);
+        }
+        this.selectedTileBEE = null;
+      }
+
+      display() {
+        let gameContainer = document.getElementById('game-container');
+        gameContainer.innerHTML = '';
+        for (let i = 0; i < 5; i++) {
+          for (let j = 0; j < 5; j++) {
+            let contents = `<div class="" id="cell-${i}-${j}" data-row="${i}" data-col="${j}" style="width: ${squareSize}px; height: ${squareSize}px; margin-right: 3px; margin-bottom: 3px; background-color: black ; border-radius: 15px; color: white; float: left;">`;
+            if (this.squares[i][j].occupant) { 
+              // contents += this.squares[i][j].occupant.type;
+              // contents += this.squares[i][j].occupant.faction;
+              contents += `(${this.squares[i][j].occupant.health})`;
+
+              if (this.squares[i][j].occupant.type == 'GUARDIAN' && this.squares[i][j].occupant.faction == 'BEE') {
+                contents += `<img class="individ" src="bee.png">`
+              }
+              if (this.squares[i][j].occupant.type == 'GUARDIAN' && this.squares[i][j].occupant.faction == 'WASP') {
+                contents += `<img class="individ" src="wasp.png">`
+              }
+              if (this.squares[i][j].occupant.type == 'QUEEN' && this.squares[i][j].occupant.faction == 'BEE') {
+                contents += `<img class="individ" src="queenbee.png">`
+              }
+              if (this.squares[i][j].occupant.type == 'QUEEN' && this.squares[i][j].occupant.faction == 'WASP') {
+                contents += `<img id="viespe" src="queenwasp.png">`
+              }
+            }
+
+
+            contents += '</div>';
+            gameContainer.innerHTML += contents;
+
+
+          }
+          gameContainer.innerHTML += '<div style="clear: left;"></div>'
+        }
+        for (let i = 0; i < 5; i++) {
+          for (let j = 0; j < 5; j++) {
+            let newCell = document.getElementById(`cell-${i}-${j}`);
+            newCell.addEventListener('click', () => {
+              console.log('clicked')
+              let row = newCell.getAttribute('data-row');
+              let col = newCell.getAttribute('data-col');
+              console.log('clicked on row: ', row, ' and col: ', col);
+              console.log('THIS: ', this); //>>>>>>>>>>>>explain again
+
+              if (this.selectedTileBEE) {
+                // bee has already been selected - next click will be the position to set the bee onto
+                console.log('BEE HAS BEEN SELECTED, CHOOSE TARGET / OTHER TILE');
+                let occupant = this.squares[i][j].occupant;
+
+                let selectedTileRow = parseInt(this.selectedTileBEE.getAttribute('data-row'));
+                let selectedTileCol = parseInt(this.selectedTileBEE.getAttribute('data-col'));
+                if (!occupant) {
+
+                  this.squares[i][j].occupant = this.squares[selectedTileRow][selectedTileCol].occupant;
+                  this.squares[selectedTileRow][selectedTileCol].occupant = null;
+                  this.selectedTileBEE = null;
+                  //writeToGameConsole('MOVING BEE TO POSITION: ' + i + ' ' + j);
+                  this.display();
+
+                } else {
+                  // we have selected a bee, and we want to target a cell that already has an occupant
+
+                  let occupant = this.squares[i][j].occupant;
+                  let attacker = this.squares[selectedTileRow][selectedTileCol];
+                  if (occupant.faction == 'BEE') {
+                    alert('cannot attack another bee');
+                    return;
+                  }
+                  console.log('ROW: ' + selectedTileRow + ' i: ' + i);
+                  console.log('COL: ' + selectedTileCol + ' j: ' + j);
+                  console.log(Math.abs(selectedTileRow - i));
+                  console.log(Math.abs(selectedTileCol - j));
+                  // row, col attacks i j
+
+//___________________________________________________________________________________________________________
+                  if (Math.abs(selectedTileRow - i) <= 1 && Math.abs(selectedTileCol - j) <= 1) {
+                    // target is in range     
+                    console.log('ATTACKING OCCUPANT: ' + i + ' ' + j);
+
+                    // writeToGameConsole('ATTACKING OCCUPANT: ' + i + ' ' + j);
+                    this.selectedTileBEE.classList.remove('selected-tile-bee');
+                    this.selectedTileBEE = null;
+                    // Damage = P1 Attack * P1 Luck – P2 Defense * P2 Luck
+                    let damage = Math.abs(attacker.occupant.attack * attacker.occupant.luck - occupant.defense * occupant.luck);
+                    console.log('ATTACKER: ', attacker);
+                    console.log('DAMAGE: ', damage);
+                    // occupant.health -= damage;
+                    occupant.attack -= (damage / 100) * 25;
+
+                    function randomNumber(numarul){
+             return Math.round( Math.random() * numarul);}
+              
+
+                    
+                    let damageWasp = Math.abs(occupant.attack * occupant.luck - attacker.occupant.defense * attacker.occupant.luck);
+                    // attacker.occupant.health -= damageWasp;
+                    this.squares[selectedTileRow][selectedTileCol].occupant.health-=damageWasp;
+                    this.squares[i][j].occupant.health -= damage;
+                    let rand = randomNumber(5)
+                    let coloana = randomNumber(5)
+                    
+                    console.log("randul este: " + rand + " coloana este: " + coloana)         
+                    if(damage){
+           
+                      this.squares[i][j].occupant= null;
+                      if(!this.squares[i][j].occupant){
+                        this.squares[i][j].occupant = this.squares[rand][coloana].occupant
+                      }
+                   
+                    }   
+                      
+                    // TODO: formula
+                    writeToGameConsole('OCCUPANTs Attack: ' + occupant.attack);
+                    writeToGameConsole('OCCUPANTs Health: ' + occupant.health);
+
+                    this.display();
+                    document.getElementById(`cell-${i}-${j}`).classList.add('selected-tile-wasp');
+                    
+
+                    if (occupant.health <= 0) {
+                      this.squares[i][j].occupant = null;
+                      this.display();
+                    }
+                    if(attacker.occupant.health <=0){
+                      this.squares[selectedTileRow][selectedTileCol].occupant = null;
+                      
+                      this.display();
+                    }
+
+                  }
+//____________________________________________________________________________________________________________
+
+
+                  /// check if occupant is near the attacker (bee)
+                }
+              } else {
+                // no bee is selected, check if we can select the bee from the surface
+                if (!this.squares[i][j].occupant) {
+                  alert('cannot select empty tile');
+                } else if (this.squares[i][j].occupant.faction != 'BEE') {
+                  alert('CANNOT SELECT A WASP!');
+                }
+                else if (this.selectedTileBEE == null) {
+                  console.log('SELECTED TILE IS NULL: ', this.selectedTileBEE);
+                  this.selectedTileBEE = newCell;
+                  this.selectedTileBEE.classList.add("selected-tile-bee");
+                }
+              }
+            });
+          }
+        }
+      }
+    
+
+
+     
+    }
+
+    
+
+
+    
+
+    function initPlayfield(playfield) {
+      let myQueenBee = new Queen('BEE');
+      let guardianBees = [new Guardian('BEE'), new Guardian('BEE'), new Guardian('BEE')];
+
+
+      let myQueenWasp = new Queen('WASP');
+      let guardianWasps = [new Guardian('WASP'), new Guardian('WASP'), new Guardian('WASP')];
+
+
+      playfield.squares[0][0].occupant = myQueenBee;
+      playfield.squares[0][1].occupant = guardianBees[0];
+      playfield.squares[1][0].occupant = guardianBees[1];
+      playfield.squares[1][1].occupant = guardianBees[2];
+
+      playfield.squares[4][4].occupant = myQueenWasp;
+      playfield.squares[3][4].occupant = guardianWasps[0];
+      playfield.squares[3][3].occupant = guardianWasps[1];
+      playfield.squares[4][3].occupant = guardianWasps[2];
+    }
+    ; 
+
+
+
+    let playfield = new Playfield();
+    initPlayfield(playfield);
+
+
+    console.log(playfield);
+
+    playfield.display();
+
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,38 @@
+    /* div.selected-tile {
+      border: 2px solid red;
+    } */
+
+    div.selected-tile-bee{
+        border: 2px solid yellow;
+        box-sizing: border-box;
+        
+        
+        
+        
+      }
+      div.selected-tile-wasp{
+        border: 2px solid red;
+        box-sizing: border-box;
+      }
+      .individ {
+        background-repeat: no-repeat;
+        padding: 1px;
+        width: 70px;
+        height: 70px;
+        
+        
+
+      }
+      #viespe {
+        background-repeat: no-repeat;
+        width: 100px;
+        height: 80px;
+        bottom: 3px;
+        position: relative;
+        
+        
+      }
+      #consola li {
+        font-size: 15px;
+        font-weight: bold;
+      }
